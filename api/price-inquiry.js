@@ -15,7 +15,20 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { from, to, email } = req.body;
+  const { from, to, email, recaptchaToken } = req.body;
+
+  // Verify reCAPTCHA token
+  if (!recaptchaToken) {
+    return res.status(400).json({ error: "reCAPTCHA token missing" });
+  }
+  const recaptchaRes = await fetch(
+    `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`,
+    { method: "POST" }
+  );
+  const recaptchaData = await recaptchaRes.json();
+  if (!recaptchaData.success || recaptchaData.score < 0.5) {
+    return res.status(400).json({ error: "reCAPTCHA verification failed" });
+  }
 
   // Backend validation
   if (!from || !to || !email) {

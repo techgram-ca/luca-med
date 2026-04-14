@@ -11,16 +11,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const to = form.to.value.trim();
     const email = form.email.value.trim();
 
-
     // Loading state
     button.disabled = true;
     button.textContent = "Sending…";
 
     try {
+      const recaptchaToken = await new Promise((resolve) => {
+        grecaptcha.ready(async () => {
+          resolve(await grecaptcha.execute("6Le5ZLYsAAAAAJn_uv__GY65ookmTZkrAUwOZiWr", { action: "price_inquiry" }));
+        });
+      });
+
       const res = await fetch("/api/price-inquiry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ from, to, email })
+        body: JSON.stringify({ from, to, email, recaptchaToken })
       });
 
       const data = await res.json();
@@ -61,5 +66,5 @@ document.addEventListener("DOMContentLoaded", () => {
         priceModal.classList.add("hidden");
         document.getElementById("contact").scrollIntoView({ behavior: "smooth" });
     });
-    
+
 });
