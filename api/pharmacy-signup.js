@@ -13,7 +13,20 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { pharmacy_name, contact_name, email, phone, address, message, services } = req.body;
+  const { pharmacy_name, contact_name, email, phone, address, message, services, recaptchaToken } = req.body;
+
+  // Verify reCAPTCHA token
+  if (!recaptchaToken) {
+    return res.status(400).json({ error: "reCAPTCHA token missing" });
+  }
+  const recaptchaRes = await fetch(
+    `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${recaptchaToken}`,
+    { method: "POST" }
+  );
+  const recaptchaData = await recaptchaRes.json();
+  if (!recaptchaData.success || recaptchaData.score < 0.5) {
+    return res.status(400).json({ error: "reCAPTCHA verification failed" });
+  }
 
   if (!pharmacy_name || !contact_name || !email) {
     return res.status(400).json({ error: "Missing required fields" });

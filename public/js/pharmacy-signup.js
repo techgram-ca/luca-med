@@ -13,33 +13,37 @@ document.addEventListener("DOMContentLoaded", () => {
     phone: form.phone.value.trim(),
     address: form.address.value.trim(),
     message: form.message.value.trim(),
-    services:Array.from(
+    services: Array.from(
                     form.querySelectorAll('input[name="services[]"]:checked')
                     ).map(cb => cb.value)
   };
 
-  try{
-  const res = await fetch("/api/pharmacy-signup", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+  try {
+    payload.recaptchaToken = await new Promise((resolve) => {
+      grecaptcha.ready(async () => {
+        resolve(await grecaptcha.execute("6Le5ZLYsAAAAAJn_uv__GY65ookmTZkrAUwOZiWr", { action: "pharmacy_signup" }));
+      });
+    });
 
-  const data = await res.json();
+    const res = await fetch("/api/pharmacy-signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-  if (!res.ok) {
-        throw new Error(data.error || "Request failed");
-      }
+    const data = await res.json();
 
-  if (res.ok) {
+    if (!res.ok) {
+      throw new Error(data.error || "Request failed");
+    }
+
     form.reset();
     // Success UI
-      showMessage(
-        "Thank you for signing up! Our team will contact you shortly.",
-        "success"
-      );
-  }
- } catch(err) {
+    showMessage(
+      "Thank you for signing up! Our team will contact you shortly.",
+      "success"
+    );
+  } catch(err) {
     showMessage(
         "Something went wrong. Please try again or contact us directly.",
         "error"
@@ -55,4 +59,3 @@ document.addEventListener("DOMContentLoaded", () => {
         messageBox.textContent = text;
     }
 });
-
